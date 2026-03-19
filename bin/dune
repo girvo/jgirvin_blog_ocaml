@@ -1,0 +1,4 @@
+(executable
+ (public_name jgirvin_blog)
+ (name main)
+ (libraries jgirvin_blog liquid_ml))
