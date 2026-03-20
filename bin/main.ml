@@ -1,16 +1,12 @@
-let has_posts path =
+let contains_posts_dir path =
   path
   |> Sys.readdir
   |> Array.exists (String.equal "posts")
 
 let usage_message = "jgirvin_blog <path>"
 let path = ref ""
-let store_path arg =
-  path := arg
-
-let run path =
-  Printf.printf "%b" (has_posts path)
 
 let () =
-  Arg.parse [] store_path usage_message;
-  Printf.printf "%b\n" (has_posts !path)
+  Arg.parse [] (fun p -> path := p) usage_message;
+  let path = if !path = "" then "." else !path in
+  Printf.printf "%b\n" (contains_posts_dir path)
