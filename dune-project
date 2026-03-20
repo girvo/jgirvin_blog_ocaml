@@ -19,7 +19,10 @@
  (name jgirvin_blog)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends ocaml liquid_ml)
+ (depends
+  ocaml
+  liquid_ml
+  (ocamlformat :with-dev-setup))
  (tags
   ("add topics" "to describe" your project)))
 

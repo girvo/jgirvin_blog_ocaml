@@ -1,0 +1,46 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# Top-most EditorConfig file
+root = true
+
+# Default settings for all files
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# OCaml files
+[*.ml]
+indent_style = space
+indent_size = 2
+
+[*.mli]
+indent_style = space
+indent_size = 2
+
+[*.mll]
+indent_style = space
+indent_size = 2
+
+[*.mly]
+indent_style = space
+indent_size = 2
+
+[*.dune]
+indent_style = space
+indent_size = 2
+
+# Dune project files
+[dune-project]
+indent_style = space
+indent_size = 2
+
+# Markdown files
+[*.md]
+trim_trailing_whitespace = false
+
+# Shell scripts
+[*.sh]
+indent_style = space
+indent_size = 2

@@ -35,10 +35,13 @@ setup.log
 # Local OPAM switch
 _opam/
 
-# macOS                                                                                                           
-.DS_Store                                                                                                         
-                                                                                                                    
+# macOS
+.DS_Store
+
 # Editor backups
 *~
 *.swp
 *.swo
+
+# Extra stuff for me to play with
+testdata/

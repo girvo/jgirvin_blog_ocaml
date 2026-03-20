@@ -1,0 +1,4 @@
+version = 0.28.1
+profile = default
+margin = 80
+max-iters = 10
