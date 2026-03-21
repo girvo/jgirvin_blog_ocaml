@@ -22,6 +22,8 @@
  (depends
   ocaml
   liquid_ml
+  yaml
+  frontmatter_extractor
   (ocamlformat :with-dev-setup))
  (tags
   ("add topics" "to describe" your project)))

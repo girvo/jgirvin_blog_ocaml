@@ -13,6 +13,8 @@ depends: [
   "dune" {>= "3.21"}
   "ocaml"
   "liquid_ml"
+  "yaml"
+  "frontmatter_extractor"
   "ocamlformat" {with-dev-setup}
   "odoc" {with-doc}
 ]
