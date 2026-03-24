@@ -10,3 +10,5 @@ let contains_dir dir path =
 
 let is_valid_input_dir path =
   List.for_all (fun d -> contains_dir d path) [ Posts; Pages; Templates ]
+
+let is_valid_output_dir path = Sys.file_exists path && Sys.is_directory path

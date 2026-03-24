@@ -8,3 +8,5 @@ val contains_dir : dir -> string -> bool
 
 val is_valid_input_dir : string -> bool
 (** Checks if the directory has all needed dir folders in it *)
+
+val is_valid_output_dir : string -> bool
