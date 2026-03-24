@@ -1,2 +1,3 @@
 (library
- (name jgirvin_blog))
+ (name jgirvin_blog)
+ (libraries yaml frontmatter_extractor.yaml))

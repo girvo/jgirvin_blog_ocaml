@@ -1,8 +1,4 @@
 (executable
  (public_name jgirvin_blog)
  (name main)
- (libraries
-  jgirvin_blog
-  liquid_ml
-  yaml
-  frontmatter_extractor.yaml))
+ (libraries jgirvin_blog liquid_ml))
