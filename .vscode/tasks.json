@@ -1,25 +1,49 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"label": "dune: watch build",
-			"type": "shell",
-			"command": "opam exec -- dune build -w",
-			"problemMatcher": [
-				"$ocamlc"
-			],
-			"group": "build",
-			"isBackground": true
-		},
-		{
-			"label": "dune: watch exec",
-			"type": "shell",
-			"command": "opam exec -- dune exec jgirvin_blog -w",
-			"problemMatcher": [
-				"$ocamlc"
-			],
-			"group": "build",
-			"isBackground": true
-		}
-	]
+  "version": "2.0.0",
+  "inputs": [
+    {
+      "id": "inputDir",
+      "type": "promptString",
+      "description": "Input directory",
+      "default": "testdata"
+    },
+    {
+      "id": "outputDir",
+      "type": "promptString",
+      "description": "Output directory",
+      "default": "ignore"
+    }
+  ],
+  "tasks": [
+    {
+      "label": "dev",
+      "type": "shell",
+      "command": "opam exec -- dune build -w @all @runtest",
+      "problemMatcher": [
+        "$ocamlc"
+      ],
+      "group": "build",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "run",
+      "type": "shell",
+      "command": "opam exec -- dune exec ./bin/main.exe -- --input ${input:inputDir} --output ${input:outputDir}",
+      "problemMatcher": [
+        "$ocamlc"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    }
+  ]
 }

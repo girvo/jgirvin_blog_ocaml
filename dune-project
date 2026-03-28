@@ -25,6 +25,7 @@
   yaml
   frontmatter_extractor
   ppx_deriving_yaml
+  cmarkit
   (alcotest :with-test)
   (ocamlformat :with-dev-setup))
  (tags

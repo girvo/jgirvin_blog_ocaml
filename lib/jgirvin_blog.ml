@@ -8,7 +8,7 @@ type post_meta = {
   draft : bool; [@default false]
   description : string option;
 }
-[@@deriving eq, show, of_yaml]
+[@@deriving eq, show, of_yaml ~skip_unknown]
 
 type post = { file : string; body : string; meta : post_meta }
 [@@deriving eq, show]

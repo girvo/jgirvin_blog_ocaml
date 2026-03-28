@@ -9,8 +9,10 @@ let spec =
     ("--output", Arg.Set_string output_dir, "<dir> Output path (default: build)");
   ]
 
+type raw_post = { path : string; contents : string }
+
 let fail msg =
-  Printf.eprintf "Error: %s\n" msg;
+  Format.eprintf "Error: %s@." msg;
   exit 1
 
 let read_posts input_dir =
@@ -19,7 +21,8 @@ let read_posts input_dir =
   |> List.filter (String.ends_with ~suffix:".md")
   |> List.map (fun file ->
       let path = get_file_path input_dir Posts file in
-      In_channel.with_open_text path In_channel.input_all)
+      let contents = In_channel.with_open_text path In_channel.input_all in
+      { path; contents })
 
 let () =
   let usage = "jgirvin_blog [options]" in
@@ -34,6 +37,16 @@ let () =
      ^ !input_dir);
   if not (is_valid_output_dir !output_dir) then
     fail ("output directory must exist and be a directory: " ^ !output_dir);
-  let posts = read_posts !input_dir in
-  List.iter (Printf.printf "%s\n\n") posts;
-  Printf.printf "done\n"
+  let raw_posts = read_posts !input_dir in
+  let posts =
+    List.map
+      (fun { path; contents } -> parse_post ~file:path contents)
+      raw_posts
+  in
+  List.iter
+    (fun p ->
+      match p with
+      | Ok post -> Format.printf "%a@." pp_post post
+      | Error e -> Format.printf "Error: %s@." e)
+    posts;
+  Format.printf "done@."

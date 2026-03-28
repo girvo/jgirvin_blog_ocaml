@@ -44,3 +44,8 @@ trim_trailing_whitespace = false
 [*.sh]
 indent_style = space
 indent_size = 2
+
+# Json
+[*.json]
+indent_style = space
+indent_size = 2

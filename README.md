@@ -8,9 +8,8 @@
   - `pages`
   - `templates`
 
-- [ ] create output folder if it doesn't exist
-- [ ] read post files in input folder into in-memory list
-- [ ] parse frontmatter for every post
+- [x] read post files in input folder into in-memory list
+- [x] parse frontmatter for every post
 - [ ] parse markdown into html
 
 - [ ] write rest of this todo lol
