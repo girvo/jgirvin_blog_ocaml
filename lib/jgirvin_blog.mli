@@ -1,5 +1,18 @@
 type dir = Posts | Pages | Templates
 
+type post_meta = {
+  title : string;
+  slug : string;
+  author : string;
+  date : string;
+  draft : bool; [@default false]
+  description : string option;
+}
+[@@deriving eq, show, of_yaml]
+
+type post = { file : string; body : string; meta : post_meta }
+[@@deriving eq, show]
+
 val dir_to_string : dir -> string
 (** Converts a dir to a string representation *)
 
@@ -10,3 +23,11 @@ val is_valid_input_dir : string -> bool
 (** Checks if the directory has all needed dir folders in it *)
 
 val is_valid_output_dir : string -> bool
+
+val dir_to_path : string -> dir -> string
+(** Takes input path, dir and gives concatted path *)
+
+val get_file_path : string -> dir -> string -> string
+(** Takes input path, dir, and file name to give full concatenated path *)
+
+val parse_post : file:string -> string -> (post, string) result

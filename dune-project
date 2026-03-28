@@ -24,6 +24,8 @@
   liquid_ml
   yaml
   frontmatter_extractor
+  ppx_deriving_yaml
+  (alcotest :with-test)
   (ocamlformat :with-dev-setup))
  (tags
   ("add topics" "to describe" your project)))

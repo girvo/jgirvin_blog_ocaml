@@ -1,3 +1,5 @@
 (library
  (name jgirvin_blog)
- (libraries yaml frontmatter_extractor.yaml))
+ (libraries yaml frontmatter_extractor.yaml)
+ (preprocess
+  (pps ppx_deriving_yaml ppx_deriving.eq ppx_deriving.show)))

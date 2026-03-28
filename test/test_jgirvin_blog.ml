@@ -40,6 +40,55 @@ let test_output_dir_exists_false () =
   check bool "output doesn't exist" false
     (is_valid_output_dir "this_is_a_folder_that_wont_exist")
 
+let post_testable = testable pp_post equal_post
+
+let test_parse_post_no_frontmatter () =
+  check
+    (result post_testable string)
+    "returns error" (Error "No frontmatter found")
+    (parse_post ~file:"ignored" "blah")
+
+let test_parse_post_broken_frontmatter () =
+  match parse_post ~file:"ignored" "---\na\n---\n" with
+  | Error _ -> ()
+  | Ok _ -> Alcotest.fail "expected Error, got Ok"
+
+let test_parse_post_missing_required () =
+  match parse_post ~file:"ignored" "---\ntitle: testing\n---\n" with
+  | Error _ -> ()
+  | Ok _ -> Alcotest.fail "expected Error, got Ok"
+
+let valid_post =
+  {|
+---
+title: Test
+slug: my-cool-test
+author: Josh Girvin
+date: 2026-03-28
+---
+# This is my body content! Nice
+|}
+
+let test_parse_post_valid () =
+  check
+    (result post_testable string)
+    "returns valid post"
+    (Ok
+       {
+         file = "test.md";
+         body = "\n# This is my body content! Nice\n";
+         meta =
+           {
+             title = "Test";
+             slug = "my-cool-test";
+             author = "Josh Girvin";
+             date = "2026-03-28";
+             draft = false;
+             description = None;
+           };
+       })
+    (parse_post ~file:"test.md" valid_post)
+
 let () =
   run "jgirvin_blog"
     [
@@ -54,5 +103,14 @@ let () =
             test_output_dir_exists_true;
           test_case "does not contain output dir" `Quick
             test_output_dir_exists_false;
+        ] );
+      ( "parsing",
+        [
+          test_case "no frontmatter" `Quick test_parse_post_no_frontmatter;
+          test_case "broken frontmatter" `Quick
+            test_parse_post_broken_frontmatter;
+          test_case "missing required fields" `Quick
+            test_parse_post_missing_required;
+          test_case "valid post" `Quick test_parse_post_valid;
         ] );
     ]

@@ -15,6 +15,8 @@ depends: [
   "liquid_ml"
   "yaml"
   "frontmatter_extractor"
+  "ppx_deriving_yaml"
+  "alcotest" {with-test}
   "ocamlformat" {with-dev-setup}
   "odoc" {with-doc}
 ]

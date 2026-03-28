@@ -13,6 +13,14 @@ let fail msg =
   Printf.eprintf "Error: %s\n" msg;
   exit 1
 
+let read_posts input_dir =
+  Sys.readdir (dir_to_path input_dir Posts)
+  |> Array.to_list
+  |> List.filter (String.ends_with ~suffix:".md")
+  |> List.map (fun file ->
+      let path = get_file_path input_dir Posts file in
+      In_channel.with_open_text path In_channel.input_all)
+
 let () =
   let usage = "jgirvin_blog [options]" in
   Arg.parse spec
@@ -26,4 +34,6 @@ let () =
      ^ !input_dir);
   if not (is_valid_output_dir !output_dir) then
     fail ("output directory must exist and be a directory: " ^ !output_dir);
-  Printf.printf "input=%s output=%s\n" !input_dir !output_dir
+  let posts = read_posts !input_dir in
+  List.iter (Printf.printf "%s\n\n") posts;
+  Printf.printf "done\n"
