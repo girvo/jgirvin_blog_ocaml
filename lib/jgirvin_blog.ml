@@ -36,3 +36,18 @@ let parse_post ~file input =
       match post_meta_of_yaml attrs with
       | Error (`Msg e) -> Error e
       | Ok meta -> Ok { file; body; meta })
+
+let parse_markdown_to_html body =
+  let doc = Cmarkit.Doc.of_string ~strict:false body in
+  Cmarkit_html.of_doc ~safe:true doc
+
+let check_required_templates path =
+  let required_templates = [ "post.liquid"; "archive.liquid" ] in
+  List.for_all
+    (fun file ->
+      let full_path = get_file_path path Templates file in
+      if Sys.file_exists full_path then true
+      else (
+        Format.printf "Can't find required template: %s@." full_path;
+        false))
+    required_templates

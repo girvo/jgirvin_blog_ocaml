@@ -37,11 +37,16 @@ let () =
      ^ !input_dir);
   if not (is_valid_output_dir !output_dir) then
     fail ("output directory must exist and be a directory: " ^ !output_dir);
+  if not (check_required_templates !input_dir) then
+    fail "Could not find required templates";
   let raw_posts = read_posts !input_dir in
   let posts =
     List.map
       (fun { path; contents } -> parse_post ~file:path contents)
       raw_posts
+    |> List.map
+         (Result.map (fun post ->
+              { post with body = parse_markdown_to_html post.body }))
   in
   List.iter
     (fun p ->

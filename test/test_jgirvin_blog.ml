@@ -89,6 +89,12 @@ let test_parse_post_valid () =
        })
     (parse_post ~file:"test.md" valid_post)
 
+let valid_page = {|
+---
+title: Test Page
+
+|}
+
 let () =
   run "jgirvin_blog"
     [
