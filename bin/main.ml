@@ -45,7 +45,7 @@ let () =
       (fun { path; contents } -> parse_post ~file:path contents)
       raw_posts
     |> List.map
-         (Result.map (fun post ->
+         (Result.map (fun (post : post) ->
               { post with body = parse_markdown_to_html post.body }))
   in
   List.iter

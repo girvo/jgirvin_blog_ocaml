@@ -10,7 +10,17 @@ type post_meta = {
 }
 [@@deriving eq, show, of_yaml ~skip_unknown]
 
+type page_meta = {
+  title : string;
+  draft : bool; [@default false]
+  description : string option;
+}
+[@@deriving eq, show, of_yaml ~skip_unknown]
+
 type post = { file : string; body : string; meta : post_meta }
+[@@deriving eq, show]
+
+type page = { file : string; body : string; meta : page_meta }
 [@@deriving eq, show]
 
 let dir_to_string = function
@@ -35,7 +45,7 @@ let parse_post ~file input =
   | Ok { attrs = Some attrs; body } -> (
       match post_meta_of_yaml attrs with
       | Error (`Msg e) -> Error e
-      | Ok meta -> Ok { file; body; meta })
+      | Ok meta -> Ok ({ file; body; meta } : post))
 
 let parse_markdown_to_html body =
   let doc = Cmarkit.Doc.of_string ~strict:false body in

@@ -10,7 +10,17 @@ type post_meta = {
 }
 [@@deriving eq, show, of_yaml]
 
+type page_meta = {
+  title : string;
+  draft : bool; [@default false]
+  description : string option;
+}
+[@@deriving eq, show, of_yaml]
+
 type post = { file : string; body : string; meta : post_meta }
+[@@deriving eq, show]
+
+type page = { file : string; body : string; meta : page_meta }
 [@@deriving eq, show]
 
 val dir_to_string : dir -> string
