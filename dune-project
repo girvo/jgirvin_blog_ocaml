@@ -5,20 +5,20 @@
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github girvo/jgirvin_blog_ocaml))
 
-(authors "Author Name <author@example.com>")
+(authors "Josh Girvin <josh@jgirvin.com>")
 
-(maintainers "Maintainer Name <maintainer@example.com>")
+(maintainers "Josh Girvin <josh@jgirvin.com")
 
-(license LICENSE)
+(license MIT)
 
 (documentation https://url/to/documentation)
 
 (package
  (name jgirvin_blog)
- (synopsis "A short synopsis")
- (description "A longer description")
+ (synopsis "A Liquid-based SSG for blogging")
+ (description "Learning OCaml by building a blogging system")
  (depends
   ocaml
   liquid_ml
@@ -29,6 +29,6 @@
   (alcotest :with-test)
   (ocamlformat :with-dev-setup))
  (tags
-  ("add topics" "to describe" your project)))
+  ("ssg" "blog")))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html
