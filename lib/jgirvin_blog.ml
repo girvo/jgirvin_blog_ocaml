@@ -47,6 +47,15 @@ let parse_post ~file input =
       | Error (`Msg e) -> Error e
       | Ok meta -> Ok ({ file; body; meta } : post))
 
+let parse_page ~file input =
+  match Frontmatter_extractor_yaml.of_string input with
+  | Error (`Msg e) -> Error e
+  | Ok { attrs = None; _ } -> Error "No frontmatter found"
+  | Ok { attrs = Some attrs; body } -> (
+      match page_meta_of_yaml attrs with
+      | Error (`Msg e) -> Error e
+      | Ok meta -> Ok ({ file; body; meta } : page))
+
 let parse_markdown_to_html body =
   let doc = Cmarkit.Doc.of_string ~strict:false body in
   Cmarkit_html.of_doc ~safe:true doc
@@ -61,3 +70,11 @@ let check_required_templates path =
         Format.printf "Can't find required template: %s@." full_path;
         false))
     required_templates
+
+let post_output_path output_dir (post : post) =
+  Filename.concat output_dir post.meta.slug
+
+let page_output_path output_dir (page : page) =
+  let slug = page.file |> Filename.basename |> Filename.remove_extension in
+  if String.equal slug "index" then output_dir
+  else Filename.concat output_dir slug

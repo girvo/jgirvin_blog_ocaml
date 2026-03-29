@@ -46,3 +46,4 @@ _opam/
 # Extra stuff for me to play with
 testdata/
 AGENTS.md
+ignore/

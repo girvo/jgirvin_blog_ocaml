@@ -89,11 +89,44 @@ let test_parse_post_valid () =
        })
     (parse_post ~file:"test.md" valid_post)
 
+let page_testable = testable pp_page equal_page
+
 let valid_page = {|
 ---
 title: Test Page
-
+---
+<h1>Hello, world!</h1>
 |}
+
+let test_parse_page_valid () =
+  check
+    (result page_testable string)
+    "returns valid page"
+    (Ok
+       {
+         file = "test.md";
+         body = "\n<h1>Hello, world!</h1>\n";
+         meta = { title = "Test Page"; draft = false; description = None };
+       })
+    (parse_page ~file:"test.md" valid_page)
+
+let test_page_output_path_normal () =
+  check string "returns normal page path" "output/my-page"
+    (page_output_path "output"
+       {
+         file = "input/pages/my-page.liquid";
+         body = "";
+         meta = { title = "Ignore"; draft = false; description = None };
+       })
+
+let test_page_output_path_index () =
+  check string "returns index as root output folder" "output"
+    (page_output_path "output"
+       {
+         file = "input/pages/index.liquid";
+         body = "";
+         meta = { title = "Ignore"; draft = false; description = None };
+       })
 
 let () =
   run "jgirvin_blog"
@@ -118,5 +151,8 @@ let () =
           test_case "missing required fields" `Quick
             test_parse_post_missing_required;
           test_case "valid post" `Quick test_parse_post_valid;
+          test_case "valid page" `Quick test_parse_page_valid;
+          test_case "normal page path" `Quick test_page_output_path_normal;
+          test_case "index page path" `Quick test_page_output_path_index;
         ] );
     ]

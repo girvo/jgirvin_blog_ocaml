@@ -24,6 +24,15 @@ let read_posts input_dir =
       let contents = In_channel.with_open_text path In_channel.input_all in
       { path; contents })
 
+let make_post_output_dir output_dir (post : post) =
+  let dirname = post_output_path output_dir post in
+  if not (Sys.file_exists dirname) then Sys.mkdir dirname 0o755
+
+let make_page_output_dir output_dir (page : page) =
+  let dirname = page_output_path output_dir page in
+  if not (String.equal dirname output_dir) then
+    if not (Sys.file_exists dirname) then Sys.mkdir dirname 0o755
+
 let () =
   let usage = "jgirvin_blog [options]" in
   Arg.parse spec
@@ -48,10 +57,15 @@ let () =
          (Result.map (fun (post : post) ->
               { post with body = parse_markdown_to_html post.body }))
   in
+  Format.printf "Building output dirs for %d posts...@." (List.length posts);
+  List.iter
+    (fun p ->
+      match p with Ok post -> make_post_output_dir !output_dir post | _ -> ())
+    posts;
   List.iter
     (fun p ->
       match p with
       | Ok post -> Format.printf "%a@." pp_post post
       | Error e -> Format.printf "Error: %s@." e)
     posts;
-  Format.printf "done@."
+  Format.printf "@.done@."

@@ -41,5 +41,8 @@ val get_file_path : string -> dir -> string -> string
 (** Takes input path, dir, and file name to give full concatenated path *)
 
 val parse_post : file:string -> string -> (post, string) result
+val parse_page : file:string -> string -> (page, string) result
 val parse_markdown_to_html : string -> string
 val check_required_templates : string -> bool
+val post_output_path : string -> post -> string
+val page_output_path : string -> page -> string
