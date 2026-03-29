@@ -1,4 +1,6 @@
 open Jgirvin_blog
+open Liquid_ml
+open Liquid_ml.Exports
 
 let input_dir = ref "."
 let output_dir = ref "build"
@@ -28,10 +30,23 @@ let make_post_output_dir output_dir (post : post) =
   let dirname = post_output_path output_dir post in
   if not (Sys.file_exists dirname) then Sys.mkdir dirname 0o755
 
+(** This handles the pages/index.liquid base case properly *)
 let make_page_output_dir output_dir (page : page) =
   let dirname = page_output_path output_dir page in
   if not (String.equal dirname output_dir) then
     if not (Sys.file_exists dirname) then Sys.mkdir dirname 0o755
+
+let read_template input_dir file =
+  let path = get_file_path input_dir Templates file in
+  In_channel.with_open_text path In_channel.input_all
+
+let render_post ~settings ~input_dir ~output_dir (post : post) =
+  let template = read_template input_dir "post.liquid" in
+  let html = Liquid.render_text ~settings template in
+  let output_file =
+    Filename.concat (post_output_path output_dir post) "index.html"
+  in
+  Out_channel.with_open_text output_file (fun oc -> output_string oc html)
 
 let () =
   let usage = "jgirvin_blog [options]" in
@@ -67,5 +82,18 @@ let () =
       match p with
       | Ok post -> Format.printf "%a@." pp_post post
       | Error e -> Format.printf "Error: %s@." e)
+    posts;
+  let settings =
+    Settings.make
+      ~template_directory:(dir_to_path !input_dir Templates)
+      ~log_policy:Verbose ()
+  in
+  List.iter
+    (fun p ->
+      match p with
+      | Ok post ->
+          render_post ~settings ~input_dir:!input_dir ~output_dir:!output_dir
+            post
+      | _ -> Format.printf "Skipping...@.")
     posts;
   Format.printf "@.done@."
