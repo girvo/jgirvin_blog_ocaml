@@ -12,19 +12,18 @@
 
 ## Pages
 
-- [ ] Define page_meta type (title, description — no author/date)
-- [ ] Read .liquid files from pages/
-- [ ] Extract frontmatter from page files
-- [ ] Pages are NOT markdown — they're liquid templates rendered with render_text
+- [x] Define page_meta type (title, description — no author/date)
+- [x] Read .liquid files from pages/
+- [x] Extract frontmatter from page files
 
 ## Templating
 
-- [ ] Build liquid context from post data (post.title, post.slug, etc. + content)
+- [x] Build liquid context from post data (post.title, post.slug, etc. + body)
 - [ ] Build liquid context from page data (page.title, page.description)
-- [ ] Build site-level context (site title, post list for nav/archive)
-- [ ] Render posts: markdown HTML injected as {{ content }} into templates/post.liquid
+- [ ] Build site-level context (site title, post list for nav/archive) **NEARLY DONE**
+- [x] Render posts: HTML injected as {{ body | raw }} into templates/post.liquid
 - [ ] Render pages: read .liquid file, render via render_text with page + site context
-- [ ] Set template_directory so {% include %} resolves partials from templates/
+- [x] Set template_directory so {% include %} resolves partials from templates/
 
 ## Partials
 
@@ -35,7 +34,7 @@
 
 - [ ] Render templates/archive.liquid with full post list as context
 - [ ] Sort posts by date (newest first)
-- [ ] Filter out drafts
+- [x] Filter out drafts
 
 ## Output
 

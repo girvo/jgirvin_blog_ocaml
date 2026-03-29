@@ -40,13 +40,15 @@ let read_template input_dir file =
   let path = get_file_path input_dir Templates file in
   In_channel.with_open_text path In_channel.input_all
 
-let render_post ~settings ~input_dir ~output_dir (post : post) =
-  let template = read_template input_dir "post.liquid" in
+let render_post ~settings ~template ~output_dir (post : post) =
   let html = Liquid.render_text ~settings template in
   let output_file =
     Filename.concat (post_output_path output_dir post) "index.html"
   in
   Out_channel.with_open_text output_file (fun oc -> output_string oc html)
+
+(** Might add more to this later?*)
+let add_base_ctx = Ctx.add "site_title" (String "jgirvin.com")
 
 let () =
   let usage = "jgirvin_blog [options]" in
@@ -68,6 +70,8 @@ let () =
     List.map
       (fun { path; contents } -> parse_post ~file:path contents)
       raw_posts
+    |> List.filter (fun r ->
+        match r with Ok (post : post) -> not post.meta.draft | Error e -> true)
     |> List.map
          (Result.map (fun (post : post) ->
               { post with body = parse_markdown_to_html post.body }))
@@ -83,16 +87,30 @@ let () =
       | Ok post -> Format.printf "%a@." pp_post post
       | Error e -> Format.printf "Error: %s@." e)
     posts;
-  let settings =
-    Settings.make
-      ~template_directory:(dir_to_path !input_dir Templates)
-      ~log_policy:Verbose ()
-  in
+  let post_template = read_template !input_dir "post.liquid" in
   List.iter
     (fun p ->
       match p with
-      | Ok post ->
-          render_post ~settings ~input_dir:!input_dir ~output_dir:!output_dir
+      | Ok (post : post) ->
+          let ctx =
+            Ctx.empty |> add_base_ctx
+            |> Ctx.add "title" (String post.meta.title)
+            |> Ctx.add "slug" (String post.meta.slug)
+            |> Ctx.add "author" (String post.meta.author)
+            |> Ctx.add "date" (String post.meta.date)
+            |> Ctx.add "description"
+                 (Option.fold ~none:Nil
+                    ~some:(fun s -> String s)
+                    post.meta.description)
+            |> Ctx.add "body" (String post.body)
+            |> Ctx.add "input_file" (String post.file)
+          in
+          let settings =
+            Settings.make
+              ~template_directory:(dir_to_path !input_dir Templates)
+              ~log_policy:Verbose () ~context:ctx
+          in
+          render_post ~settings ~template:post_template ~output_dir:!output_dir
             post
       | _ -> Format.printf "Skipping...@.")
     posts;
