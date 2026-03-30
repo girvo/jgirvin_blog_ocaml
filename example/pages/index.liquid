@@ -4,5 +4,5 @@ title: Welcome
 {% include "partials/greeting" %}
 <h1>Hello, world this is my index special case</h1>
 {% for post in recent_posts %}
-    <p>{{ post.title }}</p>
+    <p><a href="{{ post.link }}">{{ post.title }}</a></p>
 {% endfor %}

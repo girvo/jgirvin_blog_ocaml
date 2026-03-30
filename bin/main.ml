@@ -215,6 +215,20 @@ let () =
   if not (Sys.file_exists archive_dir) then Sys.mkdir archive_dir 0o755;
   Out_channel.with_open_text (Filename.concat archive_dir "index.html")
     (fun oc -> output_string oc archive_html);
+  Format.printf "Rendering RSS feed...@.";
+  let feed_template = read_template !input_dir "feed.xml.liquid" in
+  let feed_ctx =
+    Ctx.empty |> add_base_ctx
+    |> Ctx.add "recent_posts" (List (List.filteri (fun i _ -> i < 10) post_items))
+  in
+  let feed_settings =
+    Settings.make
+      ~template_directory:(dir_to_path !input_dir Templates)
+      ~context:feed_ctx ()
+  in
+  let feed_xml = Liquid.render_text ~settings:feed_settings feed_template in
+  Out_channel.with_open_text (Filename.concat !output_dir "feed.xml")
+    (fun oc -> output_string oc feed_xml);
   Format.printf "Copying assets directory over...@.";
   copy_assets !input_dir !output_dir;
   Format.printf "@.Done@."

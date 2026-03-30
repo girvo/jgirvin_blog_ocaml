@@ -64,7 +64,14 @@ let parse_markdown_to_html body =
   Cmarkit_html.of_doc ~safe:true doc
 
 let check_required_templates path =
-  let required_templates = [ "post.liquid"; "archive.liquid" ] in
+  let required_templates =
+    [
+      "post.liquid";
+      "archive.liquid";
+      "feed.xml.liquid";
+      "../pages/index.liquid";
+    ]
+  in
   List.for_all
     (fun file ->
       let full_path = get_file_path path Templates file in
