@@ -1,4 +1,4 @@
-type dir = Posts | Pages | Templates
+type dir = Posts | Pages | Templates | Assets
 
 type post_meta = {
   title : string;
@@ -27,12 +27,15 @@ let dir_to_string = function
   | Posts -> "posts"
   | Pages -> "pages"
   | Templates -> "templates"
+  | Assets -> "assets"
 
 let contains_dir dir path =
   path |> Sys.readdir |> Array.exists (String.equal (dir_to_string dir))
 
 let is_valid_input_dir path =
-  List.for_all (fun d -> contains_dir d path) [ Posts; Pages; Templates ]
+  List.for_all
+    (fun d -> contains_dir d path)
+    [ Posts; Pages; Templates; Assets ]
 
 let is_valid_output_dir path = Sys.file_exists path && Sys.is_directory path
 let dir_to_path path dir = Filename.concat path (dir_to_string dir)
@@ -74,7 +77,12 @@ let check_required_templates path =
 let post_output_path output_dir (post : post) =
   Filename.concat output_dir post.meta.slug
 
+let page_to_slug page =
+  page.file |> Filename.basename |> Filename.remove_extension
+
 let page_output_path output_dir (page : page) =
-  let slug = page.file |> Filename.basename |> Filename.remove_extension in
+  let slug = page_to_slug page in
   if String.equal slug "index" then output_dir
   else Filename.concat output_dir slug
+
+let slug_to_link slug = Format.sprintf "/%s/" slug

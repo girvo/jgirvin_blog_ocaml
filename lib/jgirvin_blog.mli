@@ -1,4 +1,4 @@
-type dir = Posts | Pages | Templates
+type dir = Posts | Pages | Templates | Assets
 
 type post_meta = {
   title : string;
@@ -46,3 +46,5 @@ val parse_markdown_to_html : string -> string
 val check_required_templates : string -> bool
 val post_output_path : string -> post -> string
 val page_output_path : string -> page -> string
+val slug_to_link : string -> string
+val page_to_slug : page -> string

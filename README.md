@@ -19,10 +19,10 @@
 ## Templating
 
 - [x] Build liquid context from post data (post.title, post.slug, etc. + body)
-- [ ] Build liquid context from page data (page.title, page.description)
-- [ ] Build site-level context (site title, post list for nav/archive) **NEARLY DONE**
+- [x] Build liquid context from page data (page.title, page.description)
+- [x] Build site-level context (site title, post list for nav/archive) **NEARLY DONE**
 - [x] Render posts: HTML injected as {{ body | raw }} into templates/post.liquid
-- [ ] Render pages: read .liquid file, render via render_text with page + site context
+- [x] Render pages: read .liquid file, render via render_text with page + site context
 - [x] Set template_directory so {% include %} resolves partials from templates/
 
 ## Partials
@@ -32,16 +32,16 @@
 
 ## Archive / Index
 
-- [ ] Render templates/archive.liquid with full post list as context
-- [ ] Sort posts by date (newest first)
+- [x] Render templates/archive.liquid with full post list as context
+- [x] Sort posts by date (newest first)
 - [x] Filter out drafts
 
 ## Output
 
-- [ ] Create output directory structure
-- [ ] Write rendered posts (slug-based paths, e.g. /hello-world/index.html)
-- [ ] Write rendered pages (e.g. /about/index.html)
-- [ ] Copy static assets (CSS, images, etc.) to output
+- [x] Create output directory structure
+- [x] Write rendered posts (slug-based paths, e.g. /hello-world/index.html)
+- [x] Write rendered pages (e.g. /about/index.html)
+- [x] Copy static assets (CSS, images, etc.) to output
 
 ## Error handling
 

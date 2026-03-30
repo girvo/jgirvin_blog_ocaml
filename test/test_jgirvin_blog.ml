@@ -23,6 +23,7 @@ let test_contains_all_dirs_true () =
       Unix.mkdir (Filename.concat dir (dir_to_string Posts)) 0o755;
       Unix.mkdir (Filename.concat dir (dir_to_string Pages)) 0o755;
       Unix.mkdir (Filename.concat dir (dir_to_string Templates)) 0o755;
+      Unix.mkdir (Filename.concat dir (dir_to_string Assets)) 0o755;
       check bool "contains all needed folders" true (is_valid_input_dir dir))
 
 let test_contains_all_dirs_false () =

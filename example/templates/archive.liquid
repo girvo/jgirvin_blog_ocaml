@@ -1,1 +1,4 @@
 <h1>This is a list of all blog posts!</h1>
+{% for post in all_posts %}
+    <li>{{ post.title }}</li>
+{% endfor  %}
