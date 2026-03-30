@@ -33,9 +33,15 @@ let contains_dir dir path =
   path |> Sys.readdir |> Array.exists (String.equal (dir_to_string dir))
 
 let is_valid_input_dir path =
-  List.for_all
-    (fun d -> contains_dir d path)
-    [ Posts; Pages; Templates; Assets ]
+  let required = [ Posts; Pages; Templates; Assets ] in
+  let missing =
+    List.filter (fun d -> not (contains_dir d path)) required
+  in
+  List.iter
+    (fun d ->
+      Printf.eprintf "Missing required directory: %s/\n" (dir_to_string d))
+    missing;
+  missing = []
 
 let is_valid_output_dir path = Sys.file_exists path && Sys.is_directory path
 let dir_to_path path dir = Filename.concat path (dir_to_string dir)
@@ -70,7 +76,8 @@ let check_required_templates path =
       "archive.liquid";
       "feed.xml.liquid";
       "sitemap.xml.liquid";
-      "../pages/index.liquid";
+      "404.liquid";
+      "index.liquid";
     ]
   in
   List.for_all
@@ -89,8 +96,6 @@ let page_to_slug page =
   page.file |> Filename.basename |> Filename.remove_extension
 
 let page_output_path output_dir (page : page) =
-  let slug = page_to_slug page in
-  if String.equal slug "index" then output_dir
-  else Filename.concat output_dir slug
+  Filename.concat output_dir (page_to_slug page)
 
 let slug_to_link slug = Format.sprintf "/%s/" slug

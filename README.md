@@ -27,7 +27,8 @@ input/
 - `templates/archive.liquid`
 - `templates/feed.xml.liquid`
 - `templates/sitemap.xml.liquid`
-- `pages/index.liquid`
+- `templates/404.liquid`
+- `templates/index.liquid`
 
 ## Post frontmatter
 
@@ -54,4 +55,4 @@ description: ...    # optional
 
 ## Output
 
-Posts are written to `<output>/<slug>/index.html`. Pages are written to `<output>/<page-name>/index.html`, except `index.liquid` which writes to `<output>/index.html`. The archive goes to `<output>/archive/index.html`. RSS feed and sitemap are written to `<output>/feed.xml` and `<output>/sitemap.xml`.
+Posts are written to `<output>/<slug>/index.html`. Pages are written to `<output>/<page-name>/index.html`. The index, archive, RSS feed, sitemap, and 404 page are generator-driven templates written to `<output>/index.html`, `<output>/archive/index.html`, `<output>/feed.xml`, `<output>/sitemap.xml`, and `<output>/404.html` respectively.

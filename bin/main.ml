@@ -108,6 +108,52 @@ let render_sitemap ~input_dir ~output_dir ~post_items page_items =
   Out_channel.with_open_text (Filename.concat output_dir "sitemap.xml")
     (fun oc -> output_string oc xml)
 
+let render_index ~input_dir ~output_dir (posts : post list) =
+  let template = read_template input_dir "index.liquid" in
+  let latest_post =
+    match posts with
+    | [] -> Nil
+    | post :: _ ->
+        Object
+          (Object.empty
+          |> Object.add "title" (String post.meta.title)
+          |> Object.add "slug" (String post.meta.slug)
+          |> Object.add "link" (String (slug_to_link post.meta.slug))
+          |> Object.add "date" (String post.meta.date)
+          |> Object.add "description"
+               (Option.fold ~none:Nil
+                  ~some:(fun s -> String s)
+                  post.meta.description)
+          |> Object.add "body" (String post.body))
+  in
+  let ctx =
+    Ctx.empty |> add_base_ctx
+    |> Ctx.add "title" (String "Home")
+    |> Ctx.add "latest_post" latest_post
+  in
+  let settings =
+    Settings.make
+      ~template_directory:(dir_to_path input_dir Templates)
+      ~context:ctx ()
+  in
+  let html = Liquid.render_text ~settings template in
+  Out_channel.with_open_text (Filename.concat output_dir "index.html")
+    (fun oc -> output_string oc html)
+
+let render_404 ~input_dir ~output_dir =
+  let template = read_template input_dir "404.liquid" in
+  let ctx =
+    Ctx.empty |> add_base_ctx |> Ctx.add "title" (String "Not found")
+  in
+  let settings =
+    Settings.make
+      ~template_directory:(dir_to_path input_dir Templates)
+      ~context:ctx ()
+  in
+  let html = Liquid.render_text ~settings template in
+  Out_channel.with_open_text (Filename.concat output_dir "404.html")
+    (fun oc -> output_string oc html)
+
 let copy_file source dest =
   let ic = In_channel.open_bin source in
   let oc = Out_channel.open_bin dest in
@@ -145,9 +191,7 @@ let () =
   if String.equal !input_dir !output_dir then
     fail "input and output dirs can't be the same";
   if not (is_valid_input_dir !input_dir) then
-    fail
-      ("input directory must contain posts/ pages/ templates/ subdirectories: "
-     ^ !input_dir);
+    fail (Printf.sprintf "input directory %s is missing required subdirectories" !input_dir);
   if not (is_valid_output_dir !output_dir) then
     fail ("output directory must exist and be a directory: " ^ !output_dir);
   if not (check_required_templates !input_dir) then
@@ -225,15 +269,10 @@ let () =
       posts
   in
   let page_items =
-    List.filter_map
+    List.map
       (fun (page : page) ->
         let slug = page_to_slug page in
-        if String.equal slug "index" then None
-        else
-          Some
-            (Object
-               (Object.empty
-               |> Object.add "link" (String (slug_to_link slug)))))
+        Object (Object.empty |> Object.add "link" (String (slug_to_link slug))))
       pages
   in
   Format.printf "Rendering pages...@.";
@@ -248,8 +287,6 @@ let () =
                 page.meta.description)
         |> Ctx.add "input_file" (String page.file)
         |> Ctx.add "link" (String (page |> page_to_slug |> slug_to_link))
-        |> Ctx.add "recent_posts"
-             (List (List.filteri (fun i _ -> i < 5) post_items))
       in
       let settings =
         Settings.make
@@ -259,6 +296,8 @@ let () =
       render_page ~settings ~template:page.body ~output_dir:!output_dir page)
     pages;
 
+  Format.printf "Rendering index...@.";
+  render_index ~input_dir:!input_dir ~output_dir:!output_dir posts;
   Format.printf "Rendering archive...@.";
   render_archive ~input_dir:!input_dir ~output_dir:!output_dir post_items;
   Format.printf "Rendering RSS feed...@.";
@@ -266,6 +305,8 @@ let () =
   Format.printf "Rendering sitemap...@.";
   render_sitemap ~input_dir:!input_dir ~output_dir:!output_dir ~post_items
     page_items;
+  Format.printf "Rendering 404...@.";
+  render_404 ~input_dir:!input_dir ~output_dir:!output_dir;
   Format.printf "Copying assets directory over...@.";
   copy_assets !input_dir !output_dir;
   Format.printf "@.Done@."

@@ -120,15 +120,6 @@ let test_page_output_path_normal () =
          meta = { title = "Ignore"; draft = false; description = None };
        })
 
-let test_page_output_path_index () =
-  check string "returns index as root output folder" "output"
-    (page_output_path "output"
-       {
-         file = "input/pages/index.liquid";
-         body = "";
-         meta = { title = "Ignore"; draft = false; description = None };
-       })
-
 let () =
   run "jgirvin_blog"
     [
@@ -154,6 +145,5 @@ let () =
           test_case "valid post" `Quick test_parse_post_valid;
           test_case "valid page" `Quick test_parse_page_valid;
           test_case "normal page path" `Quick test_page_output_path_normal;
-          test_case "index page path" `Quick test_page_output_path_index;
         ] );
     ]
