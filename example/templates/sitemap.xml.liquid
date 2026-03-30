@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>{{ site_url }}/</loc>
+  </url>
+  <url>
+    <loc>{{ site_url }}/archive/</loc>
+  </url>
+  {% for post in all_posts %}
+  <url>
+    <loc>{{ site_url }}{{ post.link }}</loc>
+  </url>
+  {% endfor %}
+  {% for page in all_pages %}
+  <url>
+    <loc>{{ site_url }}{{ page.link }}</loc>
+  </url>
+  {% endfor %}
+</urlset>

@@ -69,6 +69,7 @@ let check_required_templates path =
       "post.liquid";
       "archive.liquid";
       "feed.xml.liquid";
+      "sitemap.xml.liquid";
       "../pages/index.liquid";
     ]
   in

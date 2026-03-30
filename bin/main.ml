@@ -60,6 +60,54 @@ let add_base_ctx ctx =
   |> Ctx.add "site_title" (String "jgirvin.com")
   |> Ctx.add "site_url" (String "https://jgirvin.com")
 
+let render_archive ~input_dir ~output_dir post_items =
+  let template = read_template input_dir "archive.liquid" in
+  let ctx =
+    Ctx.empty |> add_base_ctx |> Ctx.add "all_posts" (List post_items)
+  in
+  let settings =
+    Settings.make
+      ~template_directory:(dir_to_path input_dir Templates)
+      ~context:ctx ()
+  in
+  let html = Liquid.render_text ~settings template in
+  let archive_dir = Filename.concat output_dir "archive" in
+  if not (Sys.file_exists archive_dir) then Sys.mkdir archive_dir 0o755;
+  Out_channel.with_open_text (Filename.concat archive_dir "index.html")
+    (fun oc -> output_string oc html)
+
+let render_feed ~input_dir ~output_dir post_items =
+  let template = read_template input_dir "feed.xml.liquid" in
+  let ctx =
+    Ctx.empty |> add_base_ctx
+    |> Ctx.add "recent_posts"
+         (List (List.filteri (fun i _ -> i < 10) post_items))
+  in
+  let settings =
+    Settings.make
+      ~template_directory:(dir_to_path input_dir Templates)
+      ~context:ctx ()
+  in
+  let xml = Liquid.render_text ~settings template in
+  Out_channel.with_open_text (Filename.concat output_dir "feed.xml") (fun oc ->
+      output_string oc xml)
+
+let render_sitemap ~input_dir ~output_dir ~post_items page_items =
+  let template = read_template input_dir "sitemap.xml.liquid" in
+  let ctx =
+    Ctx.empty |> add_base_ctx
+    |> Ctx.add "all_posts" (List post_items)
+    |> Ctx.add "all_pages" (List page_items)
+  in
+  let settings =
+    Settings.make
+      ~template_directory:(dir_to_path input_dir Templates)
+      ~context:ctx ()
+  in
+  let xml = Liquid.render_text ~settings template in
+  Out_channel.with_open_text (Filename.concat output_dir "sitemap.xml")
+    (fun oc -> output_string oc xml)
+
 let copy_file source dest =
   let ic = In_channel.open_bin source in
   let oc = Out_channel.open_bin dest in
@@ -106,16 +154,16 @@ let () =
     fail "Could not find required templates";
   let raw_posts = read_all_content ~kind:Posts ~suffix:".md" !input_dir in
   let posts =
-    List.map
-      (fun { path; contents } -> parse_post ~file:path contents)
+    List.filter_map
+      (fun { path; contents } ->
+        match parse_post ~file:path contents with
+        | Ok (post : post) when not post.meta.draft ->
+            Some { post with body = parse_markdown_to_html post.body }
+        | Error e ->
+            Printf.eprintf "Failed to parse post %s: %s\n" path e;
+            None
+        | _ -> None)
       raw_posts
-    |> List.filter_map (function
-      | Ok (post : post) when not post.meta.draft ->
-          Some { post with body = parse_markdown_to_html post.body }
-      | Error e ->
-          Printf.eprintf "Failed to parse: %s\n" e;
-          None
-      | _ -> None)
     |> List.sort (fun (a : post) (b : post) ->
         String.compare b.meta.date a.meta.date)
   in
@@ -149,17 +197,18 @@ let () =
 
   let raw_pages = read_all_content ~kind:Pages ~suffix:".liquid" !input_dir in
   let pages =
-    List.map
-      (fun { path; contents } -> parse_page ~file:path contents)
+    List.filter_map
+      (fun { path; contents } ->
+        match parse_page ~file:path contents with
+        | Ok (page : page) when not page.meta.draft -> Some page
+        | Error e ->
+            Printf.eprintf "Failed to parse page %s: %s\n" path e;
+            None
+        | _ -> None)
       raw_pages
-    |> List.filter (fun r ->
-        match r with Ok (page : page) -> not page.meta.draft | Error e -> true)
   in
   Format.printf "Building output dirs for %d pages...@." (List.length pages);
-  List.iter
-    (fun p ->
-      match p with Ok page -> make_page_output_dir !output_dir page | _ -> ())
-    pages;
+  List.iter (fun page -> make_page_output_dir !output_dir page) pages;
   let post_items =
     List.map
       (fun (post : post) ->
@@ -175,64 +224,48 @@ let () =
                   post.meta.description)))
       posts
   in
+  let page_items =
+    List.filter_map
+      (fun (page : page) ->
+        let slug = page_to_slug page in
+        if String.equal slug "index" then None
+        else
+          Some
+            (Object
+               (Object.empty
+               |> Object.add "link" (String (slug_to_link slug)))))
+      pages
+  in
   Format.printf "Rendering pages...@.";
   List.iter
-    (fun p ->
-      match p with
-      | Ok (page : page) ->
-          let ctx =
-            Ctx.empty |> add_base_ctx
-            |> Ctx.add "title" (String page.meta.title)
-            |> Ctx.add "description"
-                 (Option.fold ~none:Nil
-                    ~some:(fun s -> String s)
-                    page.meta.description)
-            |> Ctx.add "input_file" (String page.file)
-            |> Ctx.add "link" (String (page |> page_to_slug |> slug_to_link))
-            |> Ctx.add "recent_posts"
-                 (List (List.filteri (fun i _ -> i < 5) post_items))
-          in
-          let settings =
-            Settings.make
-              ~template_directory:(dir_to_path !input_dir Templates)
-              ~log_policy:Never () ~context:ctx
-          in
-          render_page ~settings ~template:page.body ~output_dir:!output_dir page
-      | Error e -> Format.printf "Skipping page due to: %s @." e)
+    (fun (page : page) ->
+      let ctx =
+        Ctx.empty |> add_base_ctx
+        |> Ctx.add "title" (String page.meta.title)
+        |> Ctx.add "description"
+             (Option.fold ~none:Nil
+                ~some:(fun s -> String s)
+                page.meta.description)
+        |> Ctx.add "input_file" (String page.file)
+        |> Ctx.add "link" (String (page |> page_to_slug |> slug_to_link))
+        |> Ctx.add "recent_posts"
+             (List (List.filteri (fun i _ -> i < 5) post_items))
+      in
+      let settings =
+        Settings.make
+          ~template_directory:(dir_to_path !input_dir Templates)
+          ~log_policy:Never () ~context:ctx
+      in
+      render_page ~settings ~template:page.body ~output_dir:!output_dir page)
     pages;
 
   Format.printf "Rendering archive...@.";
-  let archive_template = read_template !input_dir "archive.liquid" in
-  let archive_ctx =
-    Ctx.empty |> add_base_ctx |> Ctx.add "all_posts" (List post_items)
-  in
-  let archive_settings =
-    Settings.make
-      ~template_directory:(dir_to_path !input_dir Templates)
-      ~context:archive_ctx ()
-  in
-  let archive_html =
-    Liquid.render_text ~settings:archive_settings archive_template
-  in
-  let archive_dir = Filename.concat !output_dir "archive" in
-  if not (Sys.file_exists archive_dir) then Sys.mkdir archive_dir 0o755;
-  Out_channel.with_open_text (Filename.concat archive_dir "index.html")
-    (fun oc -> output_string oc archive_html);
+  render_archive ~input_dir:!input_dir ~output_dir:!output_dir post_items;
   Format.printf "Rendering RSS feed...@.";
-  let feed_template = read_template !input_dir "feed.xml.liquid" in
-  let feed_ctx =
-    Ctx.empty |> add_base_ctx
-    |> Ctx.add "recent_posts"
-         (List (List.filteri (fun i _ -> i < 10) post_items))
-  in
-  let feed_settings =
-    Settings.make
-      ~template_directory:(dir_to_path !input_dir Templates)
-      ~context:feed_ctx ()
-  in
-  let feed_xml = Liquid.render_text ~settings:feed_settings feed_template in
-  Out_channel.with_open_text (Filename.concat !output_dir "feed.xml") (fun oc ->
-      output_string oc feed_xml);
+  render_feed ~input_dir:!input_dir ~output_dir:!output_dir post_items;
+  Format.printf "Rendering sitemap...@.";
+  render_sitemap ~input_dir:!input_dir ~output_dir:!output_dir ~post_items
+    page_items;
   Format.printf "Copying assets directory over...@.";
   copy_assets !input_dir !output_dir;
   Format.printf "@.Done@."
