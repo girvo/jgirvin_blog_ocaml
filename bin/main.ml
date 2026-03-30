@@ -55,7 +55,10 @@ let render_page ~settings ~template ~output_dir (page : page) =
   Out_channel.with_open_text output_file (fun oc -> output_string oc html)
 
 (** Might add more to this later? *)
-let add_base_ctx = Ctx.add "site_title" (String "jgirvin.com")
+let add_base_ctx ctx =
+  ctx
+  |> Ctx.add "site_title" (String "jgirvin.com")
+  |> Ctx.add "site_url" (String "https://jgirvin.com")
 
 let copy_file source dest =
   let ic = In_channel.open_bin source in
@@ -219,7 +222,8 @@ let () =
   let feed_template = read_template !input_dir "feed.xml.liquid" in
   let feed_ctx =
     Ctx.empty |> add_base_ctx
-    |> Ctx.add "recent_posts" (List (List.filteri (fun i _ -> i < 10) post_items))
+    |> Ctx.add "recent_posts"
+         (List (List.filteri (fun i _ -> i < 10) post_items))
   in
   let feed_settings =
     Settings.make
@@ -227,8 +231,8 @@ let () =
       ~context:feed_ctx ()
   in
   let feed_xml = Liquid.render_text ~settings:feed_settings feed_template in
-  Out_channel.with_open_text (Filename.concat !output_dir "feed.xml")
-    (fun oc -> output_string oc feed_xml);
+  Out_channel.with_open_text (Filename.concat !output_dir "feed.xml") (fun oc ->
+      output_string oc feed_xml);
   Format.printf "Copying assets directory over...@.";
   copy_assets !input_dir !output_dir;
   Format.printf "@.Done@."
