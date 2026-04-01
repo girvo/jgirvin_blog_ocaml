@@ -63,7 +63,9 @@ let add_base_ctx ctx =
 let render_archive ~input_dir ~output_dir post_items =
   let template = read_template input_dir "archive.liquid" in
   let ctx =
-    Ctx.empty |> add_base_ctx |> Ctx.add "all_posts" (List post_items)
+    Ctx.empty |> add_base_ctx
+    |> Ctx.add "title" (String "Archive")
+    |> Ctx.add "all_posts" (List post_items)
   in
   let settings =
     Settings.make
@@ -80,6 +82,7 @@ let render_feed ~input_dir ~output_dir post_items =
   let template = read_template input_dir "feed.xml.liquid" in
   let ctx =
     Ctx.empty |> add_base_ctx
+    |> Ctx.add "title" (String "Feed")
     |> Ctx.add "recent_posts"
          (List (List.filteri (fun i _ -> i < 10) post_items))
   in
@@ -96,6 +99,7 @@ let render_sitemap ~input_dir ~output_dir ~post_items page_items =
   let template = read_template input_dir "sitemap.xml.liquid" in
   let ctx =
     Ctx.empty |> add_base_ctx
+    |> Ctx.add "title" (String "Sitemap")
     |> Ctx.add "all_posts" (List post_items)
     |> Ctx.add "all_pages" (List page_items)
   in
