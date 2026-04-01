@@ -1,6 +1,6 @@
 # jgirvin.com SSG
 
-A static site generator written in OCaml. Uses Liquid templates, Markdown posts with YAML frontmatter, and outputs HTML.
+A static site generator written in OCaml. Uses Liquid templates, Markdown posts with YAML frontmatter, and outputs HTML. Usable through `ghcr.io/girvo/jgirvin_blog_ocaml:main` if you want to use Docker to build with it
 
 ## Usage
 
@@ -38,8 +38,8 @@ title: Hello World
 slug: hello-world
 author: Josh
 date: 2026-03-30
-draft: false        # optional, defaults to false
-description: ...    # optional
+draft: false # optional, defaults to false
+description: ... # optional
 ---
 ```
 
@@ -48,8 +48,8 @@ description: ...    # optional
 ```yaml
 ---
 title: About
-draft: false        # optional, defaults to false
-description: ...    # optional
+draft: false # optional, defaults to false
+description: ... # optional
 ---
 ```
 
