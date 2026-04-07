@@ -47,22 +47,18 @@ let tag_to_value tags =
       Object tag_obj)
     tags
 
-let build_post_items posts =
-  List.map
-    (fun (post : post) ->
-      Object
-        (Object.empty
-        |> Object.add "title" (String post.meta.title)
-        |> Object.add "slug" (String post.meta.slug)
-        |> Object.add "link" (String (slug_to_link post.meta.slug))
-        |> Object.add "date" (String post.meta.date)
-        |> Object.add "body" (String post.body)
-        |> Object.add "tags" (List (tag_to_value post.meta.tags))
-        |> Object.add "description"
-             (Option.fold ~none:Nil
-                ~some:(fun s -> String s)
-                post.meta.description)))
-    posts
+let build_post_item (post : post) =
+  Object
+    (Object.empty
+    |> Object.add "title" (String post.meta.title)
+    |> Object.add "slug" (String post.meta.slug)
+    |> Object.add "link" (String (slug_to_link post.meta.slug))
+    |> Object.add "date" (String post.meta.date)
+    |> Object.add "body" (String post.body)
+    |> Object.add "tags" (List (tag_to_value post.meta.tags))
+    |> Object.add "description"
+         (Option.fold ~none:Nil ~some:(fun s -> String s) post.meta.description)
+    )
 
 let read_template input_dir file =
   let path = get_file_path input_dir Templates file in
@@ -126,7 +122,8 @@ let render_feed ~input_dir ~output_dir post_items =
   Out_channel.with_open_text (Filename.concat output_dir "feed.xml") (fun oc ->
       output_string oc xml)
 
-let render_sitemap ~input_dir ~output_dir ~post_items ~page_items posts_by_tags =
+let render_sitemap ~input_dir ~output_dir ~post_items ~page_items posts_by_tags
+    =
   let template = read_template input_dir "sitemap.xml.liquid" in
   let tag_items =
     List.map
@@ -156,20 +153,7 @@ let render_sitemap ~input_dir ~output_dir ~post_items ~page_items posts_by_tags 
 let render_index ~input_dir ~output_dir (posts : post list) =
   let template = read_template input_dir "index.liquid" in
   let latest_post =
-    match posts with
-    | [] -> Nil
-    | post :: _ ->
-        Object
-          (Object.empty
-          |> Object.add "title" (String post.meta.title)
-          |> Object.add "slug" (String post.meta.slug)
-          |> Object.add "link" (String (slug_to_link post.meta.slug))
-          |> Object.add "date" (String post.meta.date)
-          |> Object.add "description"
-               (Option.fold ~none:Nil
-                  ~some:(fun s -> String s)
-                  post.meta.description)
-          |> Object.add "body" (String post.body))
+    match posts with [] -> Nil | post :: _ -> build_post_item post
   in
   let ctx =
     Ctx.empty |> add_base_ctx
@@ -222,8 +206,8 @@ let render_tags_index ~input_dir ~output_dir posts_by_tags =
   let html = Liquid.render_text ~settings template in
   let tags_dir = Filename.concat output_dir "tags" in
   if not (Sys.file_exists tags_dir) then Sys.mkdir tags_dir 0o755;
-  Out_channel.with_open_text (Filename.concat tags_dir "index.html")
-    (fun oc -> output_string oc html)
+  Out_channel.with_open_text (Filename.concat tags_dir "index.html") (fun oc ->
+      output_string oc html)
 
 let render_tags ~input_dir ~output_dir posts_by_tags =
   let template = read_template input_dir "archive.liquid" in
@@ -233,7 +217,7 @@ let render_tags ~input_dir ~output_dir posts_by_tags =
     (fun (tag, posts) ->
       let tag_dir = Filename.concat tags_dir tag in
       if not (Sys.file_exists tag_dir) then Sys.mkdir tag_dir 0o755;
-      let post_items = build_post_items posts in
+      let post_items = List.map build_post_item posts in
       let ctx =
         Ctx.empty |> add_base_ctx
         |> Ctx.add "title" (String ("Tag: " ^ tag))
@@ -350,7 +334,7 @@ let () =
   in
   Format.printf "Building output dirs for %d pages...@." (List.length pages);
   List.iter (fun page -> make_page_output_dir !output_dir page) pages;
-  let post_items = build_post_items posts in
+  let post_items = List.map build_post_item posts in
   let page_items =
     List.map
       (fun (page : page) ->
