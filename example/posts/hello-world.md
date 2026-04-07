@@ -13,3 +13,7 @@ draft: false
 Okay sweet, lets see how this works...
 
 - [ ] Neat, a to-do!
+
+```ocaml
+let hello name = Printf.printf "Hello, %s" name
+```

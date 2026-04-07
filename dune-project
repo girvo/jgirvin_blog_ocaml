@@ -26,6 +26,7 @@
   frontmatter_extractor
   ppx_deriving_yaml
   cmarkit
+  hilite
   (alcotest :with-test)
   (ocamlformat :with-dev-setup))
  (tags

@@ -73,8 +73,9 @@ let parse_page ~file input =
       | Ok meta -> Ok ({ file; body; meta } : page))
 
 let parse_markdown_to_html body =
-  let doc = Cmarkit.Doc.of_string ~strict:false body in
-  Cmarkit_html.of_doc ~safe:true doc
+  Cmarkit.Doc.of_string ~strict:false body
+  |> Hilite_markdown.transform
+  |> Cmarkit_html.of_doc ~safe:false
 
 let check_required_templates path =
   let required_templates =
