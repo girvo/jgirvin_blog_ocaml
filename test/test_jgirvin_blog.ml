@@ -86,6 +86,7 @@ let test_parse_post_valid () =
              date = "2026-03-28";
              draft = false;
              description = None;
+             tags = [];
            };
        })
     (parse_post ~file:"test.md" valid_post)

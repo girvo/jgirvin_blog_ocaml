@@ -1,6 +1,6 @@
 ---
 title: A cool post
-date: 2026-03-6
+date: 2026-03-06
 description: A complete guide on using markdown effectively.
 slug: hello-world-testing
 tags: [Markdown, Guide, Formatting]

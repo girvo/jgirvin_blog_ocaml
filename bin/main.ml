@@ -36,9 +36,40 @@ let make_page_output_dir output_dir (page : page) =
   if not (String.equal dirname output_dir) then
     if not (Sys.file_exists dirname) then Sys.mkdir dirname 0o755
 
+let tag_to_value tags =
+  List.map
+    (fun tag ->
+      let tag_obj =
+        Object.empty
+        |> Object.add "name" (String tag)
+        |> Object.add "link" (String ("/tags/" ^ tag))
+      in
+      Object tag_obj)
+    tags
+
+let build_post_items posts =
+  List.map
+    (fun (post : post) ->
+      Object
+        (Object.empty
+        |> Object.add "title" (String post.meta.title)
+        |> Object.add "slug" (String post.meta.slug)
+        |> Object.add "link" (String (slug_to_link post.meta.slug))
+        |> Object.add "date" (String post.meta.date)
+        |> Object.add "body" (String post.body)
+        |> Object.add "tags" (List (tag_to_value post.meta.tags))
+        |> Object.add "description"
+             (Option.fold ~none:Nil
+                ~some:(fun s -> String s)
+                post.meta.description)))
+    posts
+
 let read_template input_dir file =
   let path = get_file_path input_dir Templates file in
   In_channel.with_open_text path In_channel.input_all
+
+let read_template_opt input_dir file =
+  try Some (read_template input_dir file) with _ -> None
 
 let render_post ~settings ~template ~output_dir (post : post) =
   let html = Liquid.render_text ~settings template in
@@ -95,13 +126,23 @@ let render_feed ~input_dir ~output_dir post_items =
   Out_channel.with_open_text (Filename.concat output_dir "feed.xml") (fun oc ->
       output_string oc xml)
 
-let render_sitemap ~input_dir ~output_dir ~post_items page_items =
+let render_sitemap ~input_dir ~output_dir ~post_items ~page_items posts_by_tags =
   let template = read_template input_dir "sitemap.xml.liquid" in
+  let tag_items =
+    List.map
+      (fun (tag, posts) ->
+        Object
+          (Object.empty
+          |> Object.add "name" (String tag)
+          |> Object.add "link" (String ("/tags/" ^ tag ^ "/"))))
+      posts_by_tags
+  in
   let ctx =
     Ctx.empty |> add_base_ctx
     |> Ctx.add "title" (String "Sitemap")
     |> Ctx.add "all_posts" (List post_items)
     |> Ctx.add "all_pages" (List page_items)
+    |> Ctx.add "all_tags" (List tag_items)
   in
   let settings =
     Settings.make
@@ -146,8 +187,32 @@ let render_index ~input_dir ~output_dir (posts : post list) =
 
 let render_404 ~input_dir ~output_dir =
   let template = read_template input_dir "404.liquid" in
+  let ctx = Ctx.empty |> add_base_ctx |> Ctx.add "title" (String "Not found") in
+  let settings =
+    Settings.make
+      ~template_directory:(dir_to_path input_dir Templates)
+      ~context:ctx ()
+  in
+  let html = Liquid.render_text ~settings template in
+  Out_channel.with_open_text (Filename.concat output_dir "404.html") (fun oc ->
+      output_string oc html)
+
+let render_tags_index ~input_dir ~output_dir posts_by_tags =
+  let template = read_template input_dir "tags.liquid" in
+  let tag_items =
+    List.map
+      (fun (tag, posts) ->
+        Object
+          (Object.empty
+          |> Object.add "name" (String tag)
+          |> Object.add "link" (String ("/tags/" ^ tag ^ "/"))
+          |> Object.add "count" (String (string_of_int (List.length posts)))))
+      posts_by_tags
+  in
   let ctx =
-    Ctx.empty |> add_base_ctx |> Ctx.add "title" (String "Not found")
+    Ctx.empty |> add_base_ctx
+    |> Ctx.add "title" (String "Tags")
+    |> Ctx.add "all_tags" (List tag_items)
   in
   let settings =
     Settings.make
@@ -155,8 +220,34 @@ let render_404 ~input_dir ~output_dir =
       ~context:ctx ()
   in
   let html = Liquid.render_text ~settings template in
-  Out_channel.with_open_text (Filename.concat output_dir "404.html")
+  let tags_dir = Filename.concat output_dir "tags" in
+  if not (Sys.file_exists tags_dir) then Sys.mkdir tags_dir 0o755;
+  Out_channel.with_open_text (Filename.concat tags_dir "index.html")
     (fun oc -> output_string oc html)
+
+let render_tags ~input_dir ~output_dir posts_by_tags =
+  let template = read_template input_dir "archive.liquid" in
+  let tags_dir = Filename.concat output_dir "tags" in
+  if not (Sys.file_exists tags_dir) then Sys.mkdir tags_dir 0o755;
+  List.iter
+    (fun (tag, posts) ->
+      let tag_dir = Filename.concat tags_dir tag in
+      if not (Sys.file_exists tag_dir) then Sys.mkdir tag_dir 0o755;
+      let post_items = build_post_items posts in
+      let ctx =
+        Ctx.empty |> add_base_ctx
+        |> Ctx.add "title" (String ("Tag: " ^ tag))
+        |> Ctx.add "all_posts" (List post_items)
+      in
+      let settings =
+        Settings.make
+          ~template_directory:(dir_to_path input_dir Templates)
+          ~context:ctx ()
+      in
+      let html = Liquid.render_text ~settings template in
+      Out_channel.with_open_text (Filename.concat tag_dir "index.html")
+        (fun oc -> output_string oc html))
+    posts_by_tags
 
 let copy_file source dest =
   let ic = In_channel.open_bin source in
@@ -195,7 +286,9 @@ let () =
   if String.equal !input_dir !output_dir then
     fail "input and output dirs can't be the same";
   if not (is_valid_input_dir !input_dir) then
-    fail (Printf.sprintf "input directory %s is missing required subdirectories" !input_dir);
+    fail
+      (Printf.sprintf "input directory %s is missing required subdirectories"
+         !input_dir);
   if not (is_valid_output_dir !output_dir) then
     fail ("output directory must exist and be a directory: " ^ !output_dir);
   if not (check_required_templates !input_dir) then
@@ -212,8 +305,7 @@ let () =
             None
         | _ -> None)
       raw_posts
-    |> List.sort (fun (a : post) (b : post) ->
-        String.compare b.meta.date a.meta.date)
+    |> sort_by_date
   in
   Format.printf "Building output dirs for %d posts...@." (List.length posts);
   List.iter (fun post -> make_post_output_dir !output_dir post) posts;
@@ -234,6 +326,7 @@ let () =
         |> Ctx.add "body" (String post.body)
         |> Ctx.add "input_file" (String post.file)
         |> Ctx.add "link" (String (slug_to_link post.meta.slug))
+        |> Ctx.add "tags" (List (tag_to_value post.meta.tags))
       in
       let settings =
         Settings.make
@@ -257,21 +350,7 @@ let () =
   in
   Format.printf "Building output dirs for %d pages...@." (List.length pages);
   List.iter (fun page -> make_page_output_dir !output_dir page) pages;
-  let post_items =
-    List.map
-      (fun (post : post) ->
-        Object
-          (Object.empty
-          |> Object.add "title" (String post.meta.title)
-          |> Object.add "slug" (String post.meta.slug)
-          |> Object.add "link" (String (slug_to_link post.meta.slug))
-          |> Object.add "date" (String post.meta.date)
-          |> Object.add "description"
-               (Option.fold ~none:Nil
-                  ~some:(fun s -> String s)
-                  post.meta.description)))
-      posts
-  in
+  let post_items = build_post_items posts in
   let page_items =
     List.map
       (fun (page : page) ->
@@ -304,11 +383,17 @@ let () =
   render_index ~input_dir:!input_dir ~output_dir:!output_dir posts;
   Format.printf "Rendering archive...@.";
   render_archive ~input_dir:!input_dir ~output_dir:!output_dir post_items;
+  Format.printf "Collecting tags...@.";
+  let posts_by_tags = group_by_tag posts in
+  Format.printf "Rendering tags...@.";
+  render_tags ~input_dir:!input_dir ~output_dir:!output_dir posts_by_tags;
+  Format.printf "Rendering tags index...@.";
+  render_tags_index ~input_dir:!input_dir ~output_dir:!output_dir posts_by_tags;
   Format.printf "Rendering RSS feed...@.";
   render_feed ~input_dir:!input_dir ~output_dir:!output_dir post_items;
   Format.printf "Rendering sitemap...@.";
   render_sitemap ~input_dir:!input_dir ~output_dir:!output_dir ~post_items
-    page_items;
+    ~page_items posts_by_tags;
   Format.printf "Rendering 404...@.";
   render_404 ~input_dir:!input_dir ~output_dir:!output_dir;
   Format.printf "Copying assets directory over...@.";

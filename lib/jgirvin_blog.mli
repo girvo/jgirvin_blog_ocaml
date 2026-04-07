@@ -7,6 +7,7 @@ type post_meta = {
   date : string;
   draft : bool; [@default false]
   description : string option;
+  tags : string list; [@default []]
 }
 [@@deriving eq, show, of_yaml]
 
@@ -22,6 +23,8 @@ type post = { file : string; body : string; meta : post_meta }
 
 type page = { file : string; body : string; meta : page_meta }
 [@@deriving eq, show]
+
+type posts_by_tag = string * post list
 
 val dir_to_string : dir -> string
 (** Converts a dir to a string representation *)
@@ -48,3 +51,5 @@ val post_output_path : string -> post -> string
 val page_output_path : string -> page -> string
 val slug_to_link : string -> string
 val page_to_slug : page -> string
+val group_by_tag : post list -> posts_by_tag list
+val sort_by_date : post list -> post list
