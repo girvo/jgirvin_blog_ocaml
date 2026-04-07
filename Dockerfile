@@ -5,7 +5,7 @@ WORKDIR /build
 
 COPY . .
 
-RUN sudo apt-get update && sudo apt-get install -y pkg-config
+RUN sudo apt-get update && sudo apt-get install -y pkg-config libonig-dev
 
 # Install deps and compile the SSG
 RUN opam install . --deps-only
